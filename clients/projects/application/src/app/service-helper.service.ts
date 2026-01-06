@@ -31,7 +31,7 @@ export class ServiceHelperService {
   }
 
   getTenantId() {
-    let tenantId = window.sessionStorage.getItem('tenantId');
+    let tenantId = window.localStorage.getItem('tenantId');
     if (!tenantId) {
       if (environment.usingCustomDomain) {
         const hostname = window.location.hostname;
@@ -45,7 +45,7 @@ export class ServiceHelperService {
           tenantId = query.get('tenantId') || '';
         }
       }
-      window.sessionStorage.setItem('tenantId', tenantId);
+      window.localStorage.setItem('tenantId', tenantId);
     }
     return tenantId;
   }
