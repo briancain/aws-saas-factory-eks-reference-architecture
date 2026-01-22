@@ -20,8 +20,8 @@ export class CommonResourcesStack extends Stack {
                 name: "TENANT_ID",
                 type: dynamodb.AttributeType.STRING
             },
-            readCapacity: 5,
-            writeCapacity: 5,
+            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+            pointInTimeRecovery: true,
             removalPolicy: RemovalPolicy.DESTROY
         });
     }
@@ -37,8 +37,8 @@ export class CommonResourcesStack extends Stack {
                 name: "ProductId",
                 type: dynamodb.AttributeType.STRING
             },
-            readCapacity: 5,
-            writeCapacity: 5,
+            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+            pointInTimeRecovery: true,
             removalPolicy: RemovalPolicy.DESTROY
         });
     }

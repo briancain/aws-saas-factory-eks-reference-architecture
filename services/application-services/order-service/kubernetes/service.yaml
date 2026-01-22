@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: order
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: order
@@ -14,6 +14,20 @@ spec:
     spec:
       serviceAccountName: KUSTOMIZE_SVC_ACCOUNT_NAME
       automountServiceAccountToken: true
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: order
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: order
+              topologyKey: kubernetes.io/hostname
       containers:
         - name: order
           image: KUSTOMIZE_IMAGE

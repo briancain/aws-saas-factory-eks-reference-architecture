@@ -3,6 +3,7 @@ commonLabels:
   saas/service: product
 resources:
 - service.yaml
+- pdb.yaml
 patchesJson6902:
 - path: host-patch.yaml
   target:

@@ -123,9 +123,9 @@ export class EKSClusterStack extends Stack {
       amiType: eks.NodegroupAmiType.AL2_X86_64,
       capacityType: eks.CapacityType.ON_DEMAND,
       nodeRole: nodeRole,
-      minSize: 1,
-      desiredSize: 2,
-      maxSize: 4,
+      minSize: 3,
+      desiredSize: 4,
+      maxSize: 8,
       instanceTypes: [new ec2.InstanceType('m5.large')],
       subnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       launchTemplateSpec: {
