@@ -1,4 +1,4 @@
-import { KubectlV29Layer } from '@aws-cdk/lambda-layer-kubectl-v29';
+import { KubectlV33Layer } from '@aws-cdk/lambda-layer-kubectl-v33';
 import { Arn, CfnJson, CfnOutput, Stack, StackProps } from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as eks from 'aws-cdk-lib/aws-eks';
@@ -78,10 +78,10 @@ export class EKSClusterStack extends Stack {
     const cluster = new eks.Cluster(this, 'SaaSCluster', {
       clusterName: props.clusterName,
       defaultCapacity: 0,
-      kubectlLayer: new KubectlV29Layer(this, 'kubectl'),
+      kubectlLayer: new KubectlV33Layer(this, 'kubectl'),
       mastersRole: clusterAdmin,
       securityGroup: ctrlPlaneSecurityGroup,
-      version: eks.KubernetesVersion.V1_29,
+      version: eks.KubernetesVersion.V1_33,
       vpc: this.vpc,
       vpcSubnets: [{ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }],
     });
@@ -120,7 +120,7 @@ export class EKSClusterStack extends Stack {
 
     const nodegroup = cluster.addNodegroupCapacity('saas-mng', {
       nodegroupName: 'saas-managed-nodegroup',
-      amiType: eks.NodegroupAmiType.AL2_X86_64,
+      amiType: eks.NodegroupAmiType.AL2023_X86_64_STANDARD,
       capacityType: eks.CapacityType.ON_DEMAND,
       nodeRole: nodeRole,
       minSize: 3,
