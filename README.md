@@ -9,6 +9,14 @@ The code provide here is intended to provide a sample implementation of a SaaS A
 
 Note that the instructions below are intended to give you step-by-step, how-to instructions for getting this solution up and running in your own AWS account. For a general description and overview of the solution, please see the [developer's guide here](GUIDE.md).
 
+## Known Issues
+
+> [!IMPORTANT]
+> **Node.js 24 Compatibility** — AWS CDK's credential resolution is broken under Node.js 24. If you see `Need to perform AWS calls for account <ACCOUNT_ID>, but no credentials have been configured` during `cdk bootstrap` or `cdk deploy`, switch to Node.js 20 or 22. On macOS with Homebrew: `brew install node@20` and prepend it to your PATH before running the deploy commands:
+> ```bash
+> export PATH="$(brew --prefix node@20)/bin:$PATH"
+> ```
+
 ## Setting up the environment
 
 > :warning: The Cloud9 workspace should be built by an IAM user with Administrator privileges, not the root account user. Please ensure you are logged in as an IAM user, not the root account user.

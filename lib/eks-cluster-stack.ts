@@ -1,4 +1,4 @@
-import { KubectlV33Layer } from '@aws-cdk/lambda-layer-kubectl-v33';
+import { KubectlV34Layer } from '@aws-cdk/lambda-layer-kubectl-v34';
 import { Arn, CfnJson, CfnOutput, Stack, StackProps } from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as eks from 'aws-cdk-lib/aws-eks';
@@ -78,10 +78,10 @@ export class EKSClusterStack extends Stack {
     const cluster = new eks.Cluster(this, 'SaaSCluster', {
       clusterName: props.clusterName,
       defaultCapacity: 0,
-      kubectlLayer: new KubectlV33Layer(this, 'kubectl'),
+      kubectlLayer: new KubectlV34Layer(this, 'kubectl'),
       mastersRole: clusterAdmin,
       securityGroup: ctrlPlaneSecurityGroup,
-      version: eks.KubernetesVersion.V1_33,
+      version: eks.KubernetesVersion.V1_34,
       vpc: this.vpc,
       vpcSubnets: [{ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }],
     });
