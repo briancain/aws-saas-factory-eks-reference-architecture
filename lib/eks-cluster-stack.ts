@@ -3,6 +3,7 @@ import { Arn, CfnJson, CfnOutput, Stack, StackProps } from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as eks from 'aws-cdk-lib/aws-eks';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as scheduler from 'aws-cdk-lib/aws-scheduler';
 import { Construct } from 'constructs';
 
 import * as fs from 'fs';
@@ -133,6 +134,65 @@ export class EKSClusterStack extends Stack {
       },
     });
     nodegroup.node.addDependency(vpcCniPlugin);
+
+    // ── Scheduled node-group roll ────────────────────────────────────────────────
+    // Keeps the managed node group's AMI fresh so Mirador OS_PATCHING.PATCH_REQUIRED
+    // (>30-day AMI age) never fires on these nodes. EKS managed node groups do NOT
+    // auto-patch, and this test bed intentionally omits EKS Auto Mode so that its
+    // other resilience flaws remain assessable — this automates away ONLY the
+    // stale-AMI "flaw".
+    //
+    // EventBridge Scheduler calls eks:UpdateNodegroupVersion (no releaseVersion) every
+    // 21 days, which rolls nodes to the latest AL2023 AMI. The roll respects the node
+    // group's updateConfig.maxUnavailable and Pod Disruption Budgets, so it is
+    // non-disruptive. Because the IaC does not pin releaseVersion, this composes
+    // cleanly with `cdk deploy` (no drift).
+    //
+    // Note: if the group is already on the latest AMI when the schedule fires,
+    // UpdateNodegroupVersion errors and Scheduler records a (harmless) failed
+    // invocation. At a 21-day cadence a newer AMI almost always exists. If the
+    // automation ever breaks, the nodes simply age back onto the Mirador red-host
+    // report, which is the existing monitoring backstop.
+    const nodegroupRollRole = new iam.Role(this, 'NodegroupRollSchedulerRole', {
+      assumedBy: new iam.ServicePrincipal('scheduler.amazonaws.com'),
+      description: 'Allows EventBridge Scheduler to roll the SaaS managed node group to the latest AMI',
+    });
+    nodegroupRollRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ['eks:UpdateNodegroupVersion'],
+        // The nodegroup ARN ends in a generated UUID; scope to this cluster+nodegroup.
+        resources: [
+          Arn.format(
+            {
+              service: 'eks',
+              resource: 'nodegroup',
+              resourceName: `${props.clusterName}/${nodegroup.nodegroupName}/*`,
+            },
+            this
+          ),
+        ],
+        effect: iam.Effect.ALLOW,
+      })
+    );
+
+    new scheduler.CfnSchedule(this, 'NodegroupRollSchedule', {
+      description: 'Rolls saas-managed-nodegroup to the latest AMI to avoid Mirador OS_PATCHING findings',
+      flexibleTimeWindow: { mode: 'OFF' },
+      scheduleExpression: 'rate(21 days)',
+      scheduleExpressionTimezone: 'America/Los_Angeles',
+      state: 'ENABLED',
+      target: {
+        arn: 'arn:aws:scheduler:::aws-sdk:eks:updateNodegroupVersion',
+        roleArn: nodegroupRollRole.roleArn,
+        input: JSON.stringify({
+          ClusterName: props.clusterName,
+          NodegroupName: nodegroup.nodegroupName,
+        }),
+        retryPolicy: { maximumRetryAttempts: 2 },
+      },
+    });
+    // ─────────────────────────────────────────────────────────────────────────────
+
 
     const codebuildKubectlRole = new iam.Role(this, 'CodebuildKubectlRole', {
       assumedBy: new iam.CompositePrincipal(
