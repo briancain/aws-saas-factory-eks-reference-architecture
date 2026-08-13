@@ -119,8 +119,9 @@ export class EKSClusterStack extends Stack {
       securityGroup: nodeSecurityGroup,
     });
 
+    const nodegroupName = 'saas-managed-nodegroup';
     const nodegroup = cluster.addNodegroupCapacity('saas-mng', {
-      nodegroupName: 'saas-managed-nodegroup',
+      nodegroupName: nodegroupName,
       amiType: eks.NodegroupAmiType.AL2023_X86_64_STANDARD,
       capacityType: eks.CapacityType.ON_DEMAND,
       nodeRole: nodeRole,
@@ -161,12 +162,14 @@ export class EKSClusterStack extends Stack {
       new iam.PolicyStatement({
         actions: ['eks:UpdateNodegroupVersion'],
         // The nodegroup ARN ends in a generated UUID; scope to this cluster+nodegroup.
+        // NB: use the literal name, not nodegroup.nodegroupName — the latter is the
+        // CFN Ref, which resolves to "<cluster>/<nodegroup>" and would corrupt the ARN.
         resources: [
           Arn.format(
             {
               service: 'eks',
               resource: 'nodegroup',
-              resourceName: `${props.clusterName}/${nodegroup.nodegroupName}/*`,
+              resourceName: `${props.clusterName}/${nodegroupName}/*`,
             },
             this
           ),
@@ -186,7 +189,7 @@ export class EKSClusterStack extends Stack {
         roleArn: nodegroupRollRole.roleArn,
         input: JSON.stringify({
           ClusterName: props.clusterName,
-          NodegroupName: nodegroup.nodegroupName,
+          NodegroupName: nodegroupName,
         }),
         retryPolicy: { maximumRetryAttempts: 2 },
       },
